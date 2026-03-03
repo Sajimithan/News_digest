@@ -1,0 +1,40 @@
+/* Badge.module.css */
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 1px 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.live {
+  background: var(--accent);
+  color: #fff;
+}
+
+.info {
+  background: var(--surface-3);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.success {
+  background: #1a4a2e;
+  color: #6fcf97;
+}
+
+.error {
+  background: #4a1a1a;
+  color: #f88;
+}
+
+.pulse {
+  animation: badgePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}

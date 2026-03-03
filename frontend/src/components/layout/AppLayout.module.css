@@ -1,0 +1,62 @@
+/* AppLayout.module.css */
+
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: oklch(0.1776 0 0);
+  overflow: hidden;
+}
+
+/* Glitch sidebars — hidden on narrow screens */
+.sidebar {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  opacity: 0.4;
+}
+
+/* Left sidebar: fade right edge */
+.sidebar:first-child::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, oklch(0.1776 0 0));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Right sidebar: fade left edge */
+.sidebar:last-child::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(to left, transparent, oklch(0.1776 0 0));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide sidebars below 900px so mobile/tablet stays clean */
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}
+
+.pane {
+  flex: 0 0 min(820px, 100%);
+  display: flex;
+  flex-direction: column;
+  width: min(820px, 100%);
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--border);
+  z-index: 1;
+}

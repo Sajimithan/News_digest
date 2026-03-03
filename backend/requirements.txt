@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+feedparser
+python-dateutil
+sse-starlette
+python-dotenv
+langchain
+langchain-groq
+groq
+httpx

@@ -1,0 +1,55 @@
+/* IconButton.module.css */
+
+.btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── default: transparent with border ─────────────────────────────────── */
+
+.default {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.default:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.default.active {
+  background: var(--surface-3);
+  color: var(--accent-light);
+  border-color: var(--accent);
+}
+
+/* ── primary: accent background ───────────────────────────────────────── */
+
+.primary {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-light);
+}
+
+.primary:disabled {
+  background: var(--surface-3);
+  color: var(--text-muted);
+}

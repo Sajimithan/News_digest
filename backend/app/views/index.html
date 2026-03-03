@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Tech News Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 900px; }
+    #log { padding: 10px; border: 1px solid #ddd; height: 120px; overflow: auto; background: #fafafa; }
+    #chat { margin-top: 12px; }
+    #messages { margin-top: 12px; border: 1px solid #ddd; padding: 10px; min-height: 220px; }
+    .msg { margin: 8px 0; }
+    .bot { color: #0b5394; }
+    .user { color: #38761d; }
+    a { word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h2>Tech News Chatbot</h2>
+
+  <div>
+    <b>Live status (SSE):</b>
+    <div id="log"></div>
+  </div>
+
+  <div id="chat">
+    <input id="input" style="width: 70%;" placeholder="Try: update news | today update | news on 2026-02-18" />
+    <button id="send">Send</button>
+  </div>
+
+  <div id="messages"></div>
+
+<script>
+  const log = document.getElementById("log");
+  const messages = document.getElementById("messages");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+
+  function addLog(text) {
+    const p = document.createElement("div");
+    p.textContent = text;
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addMessage(role, html) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.innerHTML = `<b>${role.toUpperCase()}:</b> ` + html;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  const clientId = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).slice(2);
+
+  // SSE connection
+  const es = new EventSource(`/events?client_id=${clientId}`);
+  es.addEventListener("status", (e) => addLog("STATUS: " + e.data));
+  es.addEventListener("provider_started", (e) => addLog("PROVIDER STARTED: " + e.data));
+  es.addEventListener("provider_done", (e) => addLog("PROVIDER DONE: " + e.data));
+  es.addEventListener("provider_error", (e) => addLog("PROVIDER ERROR: " + e.data));
+  es.addEventListener("job_done", (e) => addLog("JOB DONE: " + e.data));
+  es.addEventListener("result", (e) => {
+    try {
+      const payload = JSON.parse(e.data);
+      renderResult(payload.payload || payload);
+    } catch {
+      addLog("RESULT: " + e.data);
+    }
+  });
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage("user", text);
+    input.value = "";
+
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: text, client_id: clientId})
+    });
+    const data = await res.json();
+    if (data.job_id) {
+      addLog(`Job started: ${data.job_id}`);
+    }
+  }
+
+  function renderResult(data) {
+    if (data.type === "text") {
+      addMessage("bot", `<pre>${data.content}</pre>`);
+      return;
+    }
+    if (data.type === "news") {
+      const items = data.items || [];
+      if (items.length === 0) {
+        addMessage("bot", `No saved items for <b>${data.date}</b>. Try "update news" first.`);
+        return;
+      }
+      let html = `<div>News for <b>${data.date}</b>:</div>`;
+      if (data.note) {
+        html += `<div style="color: #666; font-style: italic; margin: 5px 0;">${data.note}</div>`;
+      }
+      html += `<ul>`;
+      for (const [source, title, link] of items) {
+        html += `<li><b>${source}</b> — ${title} — <a href="${link}" target="_blank">open</a></li>`;
+      }
+      html += `</ul>`;
+      addMessage("bot", html);
+      return;
+    }
+    addMessage("bot", "Unknown response.");
+  }
+
+  sendBtn.onclick = sendMessage;
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+</body>
+</html>

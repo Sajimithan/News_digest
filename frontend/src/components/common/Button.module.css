@@ -1,0 +1,65 @@
+/* Button.module.css */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────── */
+
+.sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.md {
+  padding: 5px 14px;
+}
+
+/* ── Variants ───────────────────────────────────────────────────────────── */
+
+.primary {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #222121;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-light);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.danger {
+  background: transparent;
+  border: 1px solid #7a2f2f;
+  color: #f88;
+}
+
+.danger:hover:not(:disabled) {
+  background: #3b1111;
+  color: #faa;
+}
