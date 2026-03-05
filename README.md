@@ -11,9 +11,9 @@ A full-stack AI-powered news aggregation and chat application.
 1. [Project Structure](#project-structure)
 2. [Local Development](#local-development)
 3. [Docker Quick Start](#docker-quick-start)
-4. [Production Deployment (AWS Lightsail)](#production-deployment)
+4. [Production Deployment (AWS EC2)](#production-deployment)
    - [1 — GitHub repository setup](#1--github-repository-setup)
-   - [2 — Lightsail instance](#2--lightsail-instance)
+   - [2 — EC2 instance](#2--ec2-instance)
    - [3 — Server first-time setup](#3--server-first-time-setup)
    - [4 — Deploy application files](#4--deploy-application-files)
    - [5 — Nginx & SSL](#5--nginx--ssl)
@@ -101,7 +101,7 @@ docker compose up --build
 
 ## Production Deployment
 
-> **Target**: AWS Lightsail Ubuntu 22.04, systemd + Nginx (no Docker in production)
+> **Target**: AWS EC2 Ubuntu 22.04, systemd + Nginx (no Docker in production)
 
 ### 1 — GitHub repository setup
 
@@ -120,20 +120,23 @@ git push -u origin main
 
 ---
 
-### 2 — Lightsail instance
+### 2 — EC2 instance
 
-1. Open [AWS Lightsail](https://lightsail.aws.amazon.com/) → **Create instance**
-2. Platform: **Linux / Unix** → Blueprint: **Ubuntu 22.04 LTS**
-3. Instance plan: **$10/month** (2 GB RAM) or higher is recommended
-4. Key pair: download and save the `.pem` file securely
-5. After creation → **Networking** tab → attach a **Static IP**
-6. Open ports in the Lightsail firewall:
+1. Open the [AWS EC2 Console](https://console.aws.amazon.com/ec2/) → **Launch instance**
+2. Choose an AMI: **Ubuntu Server 22.04 LTS (HVM), SSD Volume Type**
+3. Instance type: **t3.small** (2 GB RAM) or larger is recommended
+4. Key pair: create or select an existing key pair, download the `.pem` file and save it securely
+5. Network settings → **Create security group** (or attach an existing one) with these inbound rules:
 
-   | Port | Protocol | Purpose        |
-   |------|----------|----------------|
-   | 22   | TCP      | SSH            |
-   | 80   | TCP      | HTTP           |
-   | 443  | TCP      | HTTPS          |
+   | Port | Protocol | Source    | Purpose |
+   |------|----------|-----------|---------|
+   | 22   | TCP      | Your IP   | SSH     |
+   | 80   | TCP      | 0.0.0.0/0 | HTTP    |
+   | 443  | TCP      | 0.0.0.0/0 | HTTPS   |
+
+   > **Note**: Security groups are the firewall layer for EC2. There is no separate per-instance firewall UI — all port rules live in the security group.
+
+6. Launch the instance, then go to **Elastic IPs** → **Allocate** → **Associate** it with the instance so the IP doesn’t change across reboots.
 
 ---
 
@@ -241,11 +244,11 @@ sudo systemctl status certbot.timer
 Add these **repository secrets** in  
 `GitHub → Settings → Secrets and variables → Actions → New repository secret`:
 
-| Secret name         | Value                                          |
-|---------------------|------------------------------------------------|
-| `LIGHTSAIL_HOST`    | Your Lightsail static IP or hostname           |
-| `LIGHTSAIL_USER`    | `ubuntu`                                       |
-| `LIGHTSAIL_SSH_KEY` | Full content of your `.pem` private key file   |
+| Secret name   | Value                                              |
+|---------------|----------------------------------------------------|
+| `EC2_HOST`    | Your EC2 Elastic IP or public DNS hostname         |
+| `EC2_USER`    | `ubuntu`                                           |
+| `EC2_SSH_KEY` | Full content of your `.pem` private key file       |
 
 The workflow (`.github/workflows/ci-cd.yml`) will then:
 
@@ -331,7 +334,7 @@ sudo chown -R ubuntu:ubuntu /var/www/technews
 ```bash
 sudo certbot renew --dry-run
 ```
-Ensure ports 80 and 443 are open in the Lightsail firewall.
+Ensure ports 80 and 443 are open in the EC2 security group.
 
 ### Check running service logs live
 ```bash

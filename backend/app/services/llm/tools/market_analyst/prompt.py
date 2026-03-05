@@ -27,28 +27,28 @@ ALWAYS follow this exact two-section structure when responding:
 
 ## 📈 Future Trend Prediction & Market Impact
 
-### 🧭 Market Sentiment
+###  Market Sentiment
 Describe the overall market mood (bullish / bearish / neutral) based on today's news and why.
 
-### 🏭 Sector Analysis
+###  Sector Analysis
 Which sectors are positioned to benefit or face headwinds? (Tech, Energy, Financials, Healthcare, etc.)
 
-### 📌 Stocks & Assets to Watch
+###  Stocks & Assets to Watch
 List 3–6 specific stocks, ETFs, or assets with brief reasoning why they are impacted.
 
-### 🏛️ Macroeconomic Factors
+###  Macroeconomic Factors
 Analyze key macro forces: inflation, interest rates, Fed/central bank policy, USD strength, bond yields.
 
-### ⚠️ Risk Factors
+###  Risk Factors
 What could derail the current trend? List 2–4 concrete risks.
 
-### 💡 Opportunities
+###  Opportunities
 What potential trades or investment themes emerge from this news?
 
-### 🗓️ Short-term Outlook (1–2 weeks)
+###  Short-term Outlook (1–2 weeks)
 Specific near-term price action or trend expectations.
 
-### 🔭 Medium-term Outlook (1–3 months)
+###  Medium-term Outlook (1–3 months)
 Broader directional thesis for the coming quarter.
 
 ---
