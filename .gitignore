@@ -65,3 +65,19 @@ Thumbs.db
 
 # ── Docker (keep configs, ignore local overrides) ────────────────────────────
 docker-compose.override.yml
+
+# Terraform sensitive and generated files
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
