@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
+User=ubuntu
+Group=ubuntu
 
 WorkingDirectory=/var/www/technews/backend
 
@@ -13,7 +13,7 @@ WorkingDirectory=/var/www/technews/backend
 EnvironmentFile=/var/www/technews/backend/.env
 
 # Use the venv's uvicorn; bind to loopback only (nginx is the public face)
-ExecStart=/var/www/technews/backend/.venv/bin/uvicorn \
+ExecStart=/var/www/technews/backend/venv/bin/uvicorn \
     app.main:app \
     --host 127.0.0.1 \
     --port 8000 \
