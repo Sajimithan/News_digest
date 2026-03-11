@@ -68,7 +68,7 @@ jobs:
 
       - name: Vite production build
         working-directory: frontend
-        run: npx vite build --outDir dist
+        run: npm run build
 
       - name: Upload frontend dist
         uses: actions/upload-artifact@v4
@@ -124,12 +124,12 @@ jobs:
             cd /var/www/technews/backend
 
             # Create venv if it doesn't exist yet
-            if [ ! -d ".venv" ]; then
-              python3 -m venv .venv
+            if [ ! -d "venv" ]; then
+              python3.11 -m venv venv
             fi
 
-            .venv/bin/pip install --quiet --upgrade pip
-            .venv/bin/pip install --quiet -r requirements.txt
+            venv/bin/pip install --quiet --upgrade pip
+            venv/bin/pip install --quiet -r requirements.txt
 
             sudo systemctl restart technews-backend
             sudo systemctl is-active --quiet technews-backend && echo "Service running OK"
