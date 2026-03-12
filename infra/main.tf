@@ -80,7 +80,7 @@ resource "aws_instance" "technews_ec2" {
   # Runs once when the instance starts for the first time.
   # Installs all server dependencies so GitHub Actions can deploy
   # immediately after terraform apply completes.
-  user_data = base64encode(<<-BOOTSTRAP
+  user_data_base64 = base64encode(<<-BOOTSTRAP
     #!/bin/bash
     set -euo pipefail
     exec >> /var/log/technews-bootstrap.log 2>&1
