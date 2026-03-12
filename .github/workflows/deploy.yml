@@ -77,6 +77,50 @@ jobs:
             deploy/ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/technews/deploy/
 
+      # ── Write .env on server — first time only ────────────────
+      # Skips silently if .env already exists (protects live keys).
+      # To update keys: delete .env on the server and redeploy.
+      - name: Write .env (first time only)
+        env:
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+        run: |
+          if [ -z "$BACKEND_ENV" ]; then
+            echo "⚠️  BACKEND_ENV secret not set — create /var/www/technews/backend/.env manually"
+          else
+            EXISTS=$(ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+              "test -f /var/www/technews/backend/.env && echo yes || echo no")
+            if [ "$EXISTS" = "no" ]; then
+              echo "$BACKEND_ENV" | ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+                "cat > /var/www/technews/backend/.env && chmod 600 /var/www/technews/backend/.env"
+              echo "✅ .env written"
+            else
+              echo ".env already exists — skipping"
+            fi
+          fi
+
+      # ── Install systemd service + nginx config (idempotent) ───
+      # Safe to run on every deploy — always refreshes configs from deploy/.
+      - name: Install service and Nginx config
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            # systemd service
+            sudo cp /var/www/technews/deploy/technews-backend.service \
+                    /etc/systemd/system/technews-backend.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable technews-backend
+            echo "✅ systemd service installed"
+
+            # Nginx site config
+            sudo cp /var/www/technews/deploy/nginx-technews.conf \
+                    /etc/nginx/sites-available/technews
+            sudo ln -sf /etc/nginx/sites-available/technews \
+                        /etc/nginx/sites-enabled/technews
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo nginx -t
+            echo "✅ Nginx config installed"
+          EOF
+
       # ── Sync backend source ───────────────────────────────────
       - name: Rsync backend
         run: |

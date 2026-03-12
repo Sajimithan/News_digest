@@ -76,6 +76,50 @@ resource "aws_instance" "technews_ec2" {
     http_put_response_hop_limit = 1
   }
 
+  # ── Auto-bootstrap on first boot ────────────────────────────
+  # Runs once when the instance starts for the first time.
+  # Installs all server dependencies so GitHub Actions can deploy
+  # immediately after terraform apply completes.
+  user_data = base64encode(<<-BOOTSTRAP
+    #!/bin/bash
+    set -euo pipefail
+    exec >> /var/log/technews-bootstrap.log 2>&1
+    echo "=== Bootstrap started: $(date) ==="
+
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get upgrade -y
+
+    # Python 3.11
+    apt-get install -y python3.11 python3.11-venv python3-pip
+
+    # Node.js 20
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt-get install -y nodejs
+
+    # Nginx + Certbot
+    apt-get install -y nginx certbot python3-certbot-nginx
+    systemctl enable nginx
+    systemctl start nginx
+
+    # App directories owned by ubuntu
+    mkdir -p /var/www/technews/backend
+    mkdir -p /var/www/technews/frontend/dist
+    mkdir -p /var/www/technews/deploy
+    chown -R ubuntu:ubuntu /var/www/technews
+
+    # Allow ubuntu to manage services without password (required for CI/CD)
+    echo "ubuntu ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /bin/systemctl, /usr/sbin/nginx, /usr/bin/nginx" \
+      > /etc/sudoers.d/technews-deploy
+    chmod 440 /etc/sudoers.d/technews-deploy
+
+    echo "=== Bootstrap complete: $(date) ==="
+  BOOTSTRAP
+  )
+
+  # Do not replace the instance if user_data is later modified
+  user_data_replace_on_change = false
+
   tags = {
     Name = "${var.project_name}-${var.environment}-ec2"
   }
