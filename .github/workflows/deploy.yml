@@ -67,8 +67,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Add server to known_hosts
-        run: ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+      - name: Wait for server SSH (with retry)
+        run: |
+          for i in {1..30}; do
+            if timeout 5 ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+              echo "✅ SSH is ready"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting for SSH..."
+            sleep 5
+          done
+          echo "❌ SSH not reachable after 150 seconds"
+          exit 1
 
       # ── Sync deploy config files (service + nginx) ────────────
       - name: Rsync deploy configs
