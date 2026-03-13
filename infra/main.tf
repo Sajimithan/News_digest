@@ -102,6 +102,22 @@ resource "aws_instance" "technews_ec2" {
     systemctl enable nginx
     systemctl start nginx
 
+    # ── Disable cloud-init warnings to prevent rsync protocol corruption ────
+    sudo -u ubuntu touch /home/ubuntu/.cloud-warnings.skip
+
+    # ── Prevent shell output during rsync by making .bashrc minimal ────
+    # The minimal bashrc prevents SSH option processing from outputting anything
+    # during non-interactive rsync --server invocations
+    cat > /home/ubuntu/.bashrc <<'EOF'
+# Minimal bashrc to prevent ssh/rsync protocol corruption
+# All profile.d scripts and initialization is skipped for non-interactive shells
+case $- in
+  *i*) . /etc/bash.bashrc ;;  # Interactive: load normal bashrc
+esac
+EOF
+    chown ubuntu:ubuntu /home/ubuntu/.bashrc
+    chmod 644 /home/ubuntu/.bashrc
+
     # App directories owned by ubuntu
     mkdir -p /var/www/technews/backend
     mkdir -p /var/www/technews/frontend/dist
