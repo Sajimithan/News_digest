@@ -162,4 +162,4 @@ curl http://localhost/
 | DOCKER_PASSWORD | dckr_pat_abc123xyz... |
 | EC2_HOST | 13.51.42.73 |
 | EC2_SSH_KEY | -----BEGIN RSA PRIVATE KEY-----\n...key content...\n-----END RSA PRIVATE KEY----- |
-| GROQ_API_KEY | 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 |
+| GROQ_API_KEY | gsk_xxxxxxxxxxxxxxxxxxxx |

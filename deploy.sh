@@ -1,8 +1,8 @@
 #!/bin/bash
 cd /var/www/technews
 
-# Login to Docker Hub
-echo "dckr_pat_QnzN8jLV5S3nK2pWxmZ4j_DQvR0" | docker login -u saji7x --password-stdin
+# Login to Docker Hub (credentials passed via secrets)
+echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
 # Pull latest images
 echo "Pulling images from Docker Hub..."
