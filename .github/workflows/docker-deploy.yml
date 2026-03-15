@@ -1,0 +1,102 @@
+name: Deploy to EC2 (Docker)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker-build.yml'
+      - '.github/workflows/docker-deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add EC2 host key
+        run: |
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Wait for EC2 SSH readiness
+        run: |
+          max_attempts=60
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.EC2_HOST }} "echo SSH ready"; then
+              echo "SSH connection established"
+              break
+            fi
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt/$max_attempts: Waiting for EC2 SSH..."
+            sleep 5
+          done
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "Failed to connect to EC2 after $max_attempts attempts"
+            exit 1
+          fi
+
+      - name: Deploy containers to EC2
+        run: |
+          ssh ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          set -e
+          
+          echo "=== Deploying Docker containers ==="
+          
+          # Docker login
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          
+          # Create app directory
+          mkdir -p /var/www/technews
+          cd /var/www/technews
+          
+          # Download docker-compose.yml from GitHub
+          wget -q https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml -O docker-compose.yml
+          
+          # Check if .env exists, create if not (first deploy only)
+          if [ ! -f backend.env ]; then
+            echo "Creating backend .env file (first deploy)"
+            echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" > backend.env
+          fi
+          
+          # Pull latest images
+          export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+          docker compose pull || true
+          
+          # Stop and remove old containers
+          docker compose down || true
+          
+          # Start new containers
+          docker compose --env-file backend.env up -d
+          
+          # Verify containers are running
+          sleep 5
+          docker compose ps
+          
+          # Health check
+          echo "=== Health check ==="
+          if curl -f http://localhost:8000/health; then
+            echo "Backend is healthy ✓"
+          else
+            echo "Backend health check failed"
+            docker compose logs backend
+            exit 1
+          fi
+          
+          echo "=== Deployment successful ==="
+          EOF
+
+      - name: Logout from Docker Hub
+        if: always()
+        run: ssh ubuntu@${{ secrets.EC2_HOST }} "docker logout" || true

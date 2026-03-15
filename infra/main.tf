@@ -90,42 +90,35 @@ resource "aws_instance" "technews_ec2" {
     apt-get update -y
     apt-get upgrade -y
 
-    # Python 3.11
-    apt-get install -y python3.11 python3.11-venv python3-pip
+    # ── Install Docker & Docker Compose ─────────────────────────────────────
+    apt-get install -y ca-certificates curl gnupg lsb-release
 
-    # Node.js 20
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
+    # Add Docker's official GPG key
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-    # Nginx + Certbot
-    apt-get install -y nginx certbot python3-certbot-nginx
-    systemctl enable nginx
-    systemctl start nginx
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    # ── Disable cloud-init warnings to prevent rsync protocol corruption ────
-    sudo -u ubuntu touch /home/ubuntu/.cloud-warnings.skip
+    # Install Docker and Docker Compose
+    apt-get update -y
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    # ── Prevent shell output during rsync by making .bashrc minimal ────
-    # The minimal bashrc prevents SSH option processing from outputting anything
-    # during non-interactive rsync --server invocations
-    cat > /home/ubuntu/.bashrc <<'EOF'
-# Minimal bashrc to prevent ssh/rsync protocol corruption
-# All profile.d scripts and initialization is skipped for non-interactive shells
-case $- in
-  *i*) . /etc/bash.bashrc ;;  # Interactive: load normal bashrc
-esac
-EOF
-    chown ubuntu:ubuntu /home/ubuntu/.bashrc
-    chmod 644 /home/ubuntu/.bashrc
+    # Start Docker daemon
+    systemctl enable docker
+    systemctl start docker
 
-    # App directories owned by ubuntu
-    mkdir -p /var/www/technews/backend
-    mkdir -p /var/www/technews/frontend/dist
-    mkdir -p /var/www/technews/deploy
+    # ── Add ubuntu user to docker group (required for GitHub Actions to use docker) ────
+    usermod -aG docker ubuntu
+
+    # ── Create app directories for docker-compose volumes ────────────────────
+    mkdir -p /var/www/technews
+    mkdir -p /var/www/technews/data
     chown -R ubuntu:ubuntu /var/www/technews
 
-    # Allow ubuntu to manage services without password (required for CI/CD)
-    echo "ubuntu ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /bin/systemctl, /usr/sbin/nginx, /usr/bin/nginx" \
+    # ── Allow ubuntu to manage docker and docker-compose without password ────
+    echo "ubuntu ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /bin/systemctl" \
       > /etc/sudoers.d/technews-deploy
     chmod 440 /etc/sudoers.d/technews-deploy
 

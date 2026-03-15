@@ -1,37 +1,50 @@
+version: '3.8'
+
 services:
 
-  # ── FastAPI backend ──────────────────────────────────────────────────────────
+  # ── FastAPI backend (pulled from Docker Hub) ────────────────────────────────
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/technews-backend:latest
     container_name: technews_backend
-    restart: unless-stopped
+    restart: always
     env_file: ./backend/.env          # provides GROQ_API_KEY and any other secrets
     environment:
-      DB_PATH: data/news.db           # write DB into the mounted volume directory
+      DB_PATH: data/news.db
     ports:
-      - "8000:8000"                   # optional: expose directly for debugging
+      - "127.0.0.1:8000:8000"         # Only expose to localhost (behind Nginx)
     volumes:
-      - db_data:/app/data             # persist SQLite database across restarts
+      - db_data:/app/data
+    networks:
+      - technews
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ── React + Nginx frontend ───────────────────────────────────────────────────
+  # ── React + Nginx frontend (pulled from Docker Hub) ──────────────────────────
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/technews-frontend:latest
     container_name: technews_frontend
-    restart: unless-stopped
+    restart: always
     ports:
-      - "3000:80"                     # browse at http://localhost:3000
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - technews
+    environment:
+      - BACKEND_URL=http://backend:8000
 
 volumes:
   db_data:
+    driver: local
+
+networks:
+  technews:
+    driver: bridge
+
