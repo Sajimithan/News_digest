@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Tech News Chatbot",
     description="Fetch, cache, and chat about tech news from multiple providers.",
-    version="2.0.0",
+    version="2.0.1",  # Auto-deployed from GitHub Actions
 )
 
 # Global exception handlers — must be registered before routes are added
