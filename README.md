@@ -293,7 +293,7 @@ All routes are served at the root (no `/api/` prefix).
 | GET | `/debug` | Debug info |
 | GET | `/events` | SSE event stream (`?client_id=<id>`) |
 | POST | `/stock/chat` | AI stock analysis chat (streaming) |
-| GET | `/stock` | Stock market data |
+| GET | `/stock/prediction` | External API: synchronous LLM market summary + trend prediction (`?d=YYYY-MM-DD`) |
 
 ---
 

@@ -13,6 +13,7 @@ import re
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
+from app.exceptions.errors import ProviderError
 from app.services.async_utils import to_thread
 from app.services.job_manager import JobManager
 from app.services.sse_manager import SSEManager
@@ -129,6 +130,55 @@ class StockChatService:
         result = {"type": "text", "content": STOCK_HELP_TEXT}
         await sse_manager.publish(client_id, "result", self._sse_payload(result, job_id))
         job_manager.set_result(job_id, result)
+
+    async def analyze_for_date(self, date_str: str) -> dict:
+        """
+        Run stock market analysis and return a single JSON-friendly payload.
+
+        This method is intended for request/response HTTP APIs (non-SSE) used
+        by external services.
+        """
+        if not self.stock_news_service:
+            raise ProviderError("Stock news service is not configured.", provider="internal")
+
+        if not (
+            self.llm
+            and self.llm_enabled
+            and self.tool_executor
+            and hasattr(self.llm, "stream_stock_analysis_with_tools")
+        ):
+            raise ProviderError(
+                "Stock LLM analysis is disabled. Configure GROQ_API_KEY.",
+                provider="Groq",
+            )
+
+        tokens: list[str] = []
+        articles: list[dict] = []
+
+        try:
+            async for item in self.llm.stream_stock_analysis_with_tools(date_str, self.tool_executor):
+                if isinstance(item, str):
+                    tokens.append(item)
+                elif isinstance(item, dict) and item.get("__event") == "articles":
+                    articles = item.get("data", []) or []
+        except Exception as exc:
+            logger.exception("Stock analyze_for_date failed for %s: %s", date_str, exc)
+            raise ProviderError(f"Stock LLM analysis failed: {exc}", provider="Groq") from exc
+
+        analysis = "".join(tokens).strip()
+        if not analysis:
+            raise ProviderError(
+                "Stock LLM analysis returned an empty response.",
+                provider="Groq",
+            )
+
+        return {
+            "type": "stock_analysis",
+            "date": date_str,
+            "analysis": analysis,
+            "articles": articles,
+            "article_count": len(articles),
+        }
 
     # ------------------------------------------------------------------
     # Private handlers

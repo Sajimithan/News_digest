@@ -54,7 +54,8 @@ from app.services.rss_fetcher import RSSFetcher
 from app.services.sse_manager import sse_manager
 
 # Load .env BEFORE reading any os.getenv() calls
-load_dotenv()
+_BACKEND_ENV = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=_BACKEND_ENV)
 
 logging.basicConfig(
     level=logging.INFO,

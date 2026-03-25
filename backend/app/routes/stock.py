@@ -14,6 +14,7 @@ import app.dependencies as deps
 from app.exceptions.errors import InputValidationError
 from app.services.job_manager import job_manager
 from app.services.sse_manager import sse_manager
+from app.utils.date_helpers import resolve_date, validate_iso_date
 
 logger = logging.getLogger(__name__)
 
@@ -66,3 +67,41 @@ async def stock_chat(payload: dict) -> dict:
     )
 
     return {"job_id": job_id}
+
+
+@router.get("/stock/prediction")
+async def stock_prediction(d: str = "today") -> dict:
+    """
+    Synchronous market-trend analysis endpoint for external applications.
+
+    Query parameters:
+        d — date in ``YYYY-MM-DD`` format, or ``today`` / ``yesterday``
+
+    Response:
+        {
+            "type": "stock_analysis",
+            "date": "YYYY-MM-DD",
+            "analysis": "<LLM market summary + prediction markdown>",
+            "articles": [...],
+            "article_count": 20
+        }
+    """
+    raw = (d or "today").strip()
+    resolved = resolve_date(raw)
+
+    try:
+        validate_iso_date(resolved)
+    except ValueError:
+        raise InputValidationError(
+            f"Invalid date: {raw!r}. Use YYYY-MM-DD, 'today', or 'yesterday'.",
+            field="d",
+        )
+
+    svc = deps.stock_chat_service
+    if svc is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": {"message": "Stock chat service is not available."}},
+        )
+
+    return await svc.analyze_for_date(resolved)
