@@ -16,7 +16,7 @@ const MessageList: React.FC = () => {
       {messages.length === 0 && (
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>📰</div>
-          <p className={styles.emptyTitle}>Tech News Digest R</p>
+          <p className={styles.emptyTitle}>Tech News Digest RR</p>
           <p className={styles.emptyHint}>
             Type a date like <code>2025-06-01</code> and I'll fetch the latest
             tech news for that day and give you a live summary.
