@@ -7,11 +7,12 @@ POST /stock/chat  — submit a market question, returns job_id immediately.
 import asyncio
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 import app.dependencies as deps
 from app.exceptions.errors import InputValidationError
+from app.security import require_external_api_key
 from app.services.job_manager import job_manager
 from app.services.sse_manager import sse_manager
 from app.utils.date_helpers import resolve_date, validate_iso_date
@@ -69,7 +70,7 @@ async def stock_chat(payload: dict) -> dict:
     return {"job_id": job_id}
 
 
-@router.get("/stock/prediction")
+@router.get("/stock/prediction", dependencies=[Depends(require_external_api_key)])
 async def stock_prediction(d: str = "today") -> dict:
     """
     Synchronous market-trend analysis endpoint for external applications.

@@ -23,6 +23,7 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 from app.config import settings
@@ -72,6 +73,15 @@ app = FastAPI(
     description="Fetch, cache, and chat about tech news from multiple providers.",
     version="2.0.1",  # Auto-deployed from GitHub Actions
 )
+
+if settings.CORS_ALLOWED_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.CORS_ALLOWED_ORIGINS),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Global exception handlers — must be registered before routes are added
 register_exception_handlers(app)

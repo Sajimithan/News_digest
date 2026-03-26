@@ -276,6 +276,8 @@ See `backend/.env.example` for all variables with descriptions.
 | `FINNHUB_API_KEY` | No | — | Real-time stock quotes |
 | `POLYGON_API_KEY` | No | — | Market data (future use) |
 | `DB_PATH` | No | `news.db` | SQLite database file path |
+| `CORS_ALLOWED_ORIGINS` | No | — | Comma-separated frontend origins allowed by CORS (e.g. `https://app.example.com`) |
+| `EXTERNAL_API_KEYS` | No | — | Comma-separated API keys accepted by external endpoints (`x-api-key` or Bearer token) |
 
 ---
 
@@ -293,7 +295,35 @@ All routes are served at the root (no `/api/` prefix).
 | GET | `/debug` | Debug info |
 | GET | `/events` | SSE event stream (`?client_id=<id>`) |
 | POST | `/stock/chat` | AI stock analysis chat (streaming) |
-| GET | `/stock/prediction` | External API: synchronous LLM market summary + trend prediction (`?d=YYYY-MM-DD`) |
+| GET | `/stock/prediction` | External API: synchronous LLM market summary + trend prediction (`?d=YYYY-MM-DD`) (protected by API key when `EXTERNAL_API_KEYS` is set) |
+
+### External App Consumption Example
+
+Use one of the configured keys from `EXTERNAL_API_KEYS`.
+
+```bash
+curl -X GET "https://<your-domain>/stock/prediction?d=2026-03-25" \
+   -H "x-api-key: <your-external-api-key>"
+```
+
+Alternative auth header:
+
+```bash
+curl -X GET "https://<your-domain>/stock/prediction?d=today" \
+   -H "Authorization: Bearer <your-external-api-key>"
+```
+
+Response shape:
+
+```json
+{
+   "type": "stock_analysis",
+   "date": "2026-03-25",
+   "analysis": "<LLM generated market summary and future trend prediction>",
+   "articles": [],
+   "article_count": 0
+}
+```
 
 ---
 
